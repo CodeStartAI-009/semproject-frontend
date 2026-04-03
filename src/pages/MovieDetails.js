@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import API from "../services/api";
 import ReviewForm from "../components/ReviewForm";
@@ -13,7 +13,8 @@ function MovieDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadData = async () => {
+  // ✅ FIX: useCallback
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -33,11 +34,12 @@ function MovieDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
+  // ✅ FIX: only depend on loadData
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   if (loading) return <h2 style={{ textAlign: "center" }}>Loading...</h2>;
   if (error) return <h2 style={{ textAlign: "center", color: "red" }}>{error}</h2>;
@@ -46,23 +48,23 @@ function MovieDetails() {
     <div style={styles.container}>
 
       {/* 🎬 Movie */}
-      <h2>{movie.title}</h2>
+      <h2>{movie?.title}</h2>
 
       <div style={styles.movieSection}>
-        {movie.poster && (
+        {movie?.poster && (
           <img src={movie.poster} alt={movie.title} style={styles.poster} />
         )}
 
         <div>
-          <p><b>⭐ TMDB Rating:</b> {movie.rating || "N/A"}</p>
-          <p><b>📅 Release:</b> {movie.release_date || "N/A"}</p>
+          <p><b>⭐ TMDB Rating:</b> {movie?.rating || "N/A"}</p>
+          <p><b>📅 Release:</b> {movie?.release_date || "N/A"}</p>
 
           <p>
             <b>🎭 Genres:</b>{" "}
-            {movie.genres?.length > 0 ? movie.genres.join(", ") : "N/A"}
+            {movie?.genres?.length > 0 ? movie.genres.join(", ") : "N/A"}
           </p>
 
-          <p><b>📖 Description:</b> {movie.description}</p>
+          <p><b>📖 Description:</b> {movie?.description}</p>
         </div>
       </div>
 
