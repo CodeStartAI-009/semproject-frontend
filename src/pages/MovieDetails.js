@@ -17,16 +17,18 @@ function MovieDetails() {
     try {
       setLoading(true);
 
-      const movieRes = await API.get(`/movies/${id}`);
-      const reviewRes = await API.get(`/reviews/${id}`);
-      const summaryRes = await API.get(`/reviews/summary/${id}`);
+      const [movieRes, reviewRes, summaryRes] = await Promise.all([
+        API.get(`/movies/${id}`),
+        API.get(`/reviews/${id}`),
+        API.get(`/reviews/summary/${id}`),
+      ]);
 
       setMovie(movieRes.data);
       setReviews(reviewRes.data);
       setSummary(summaryRes.data);
 
     } catch (err) {
-      console.error("Error:", err);
+      console.error(err);
       setError("Failed to load movie data");
     } finally {
       setLoading(false);
@@ -41,27 +43,23 @@ function MovieDetails() {
   if (error) return <h2 style={{ textAlign: "center", color: "red" }}>{error}</h2>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      
-      {/* 🎬 Movie Section */}
+    <div style={styles.container}>
+
+      {/* 🎬 Movie */}
       <h2>{movie.title}</h2>
 
-      <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
-        
-        {/* Poster */}
+      <div style={styles.movieSection}>
         {movie.poster && (
-          <img src={movie.poster} alt={movie.title} width="200" />
+          <img src={movie.poster} alt={movie.title} style={styles.poster} />
         )}
 
         <div>
-          <p><b>⭐ Rating:</b> {movie.rating || "N/A"}</p>
+          <p><b>⭐ TMDB Rating:</b> {movie.rating || "N/A"}</p>
           <p><b>📅 Release:</b> {movie.release_date || "N/A"}</p>
 
           <p>
             <b>🎭 Genres:</b>{" "}
-            {movie.genres?.length > 0
-              ? movie.genres.join(", ")
-              : "N/A"}
+            {movie.genres?.length > 0 ? movie.genres.join(", ") : "N/A"}
           </p>
 
           <p><b>📖 Description:</b> {movie.description}</p>
@@ -70,23 +68,22 @@ function MovieDetails() {
 
       {/* 📊 AI Summary */}
       {summary && (
-        <div
-          style={{
-            border: "1px solid #ddd",
-            padding: "10px",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            background: "#f9f9f9"
-          }}
-        >
-          <h3>📊 Review Summary</h3>
+        <div style={styles.summary}>
+          <h3>📊 AI Review Analysis</h3>
+
           <p>👍 Positive: {summary.positive}%</p>
           <p>👎 Negative: {summary.negative}%</p>
+          <p>😐 Neutral: {summary.neutral}%</p>
+
+          <p>⚠️ Fake Reviews: {summary.fake_percentage}%</p>
+
+          <p>⭐ Overall Rating: {summary.overall_rating}/10</p>
+
           <p><b>{summary.summary}</b></p>
         </div>
       )}
 
-      {/* ⭐ Review Form */}
+      {/* ⭐ Add Review */}
       <ReviewForm movieId={id} refresh={loadData} />
 
       {/* 💬 Reviews */}
@@ -95,43 +92,89 @@ function MovieDetails() {
       {reviews.length === 0 ? (
         <p>No reviews yet</p>
       ) : (
-        reviews.map((r) => (
+        reviews.map((r, index) => (
           <div
-            key={r._id}
+            key={index}
             style={{
-              border: "1px solid #ccc",
-              margin: "10px 0",
-              padding: "10px",
-              borderRadius: "8px",
-              background: r.sentiment === "positive" ? "#e8f5e9" : "#ffebee"
+              ...styles.reviewCard,
+              background:
+                r.sentiment === "positive"
+                  ? "#e8f5e9"
+                  : r.sentiment === "negative"
+                  ? "#ffebee"
+                  : "#eeeeee",
             }}
           >
-            {/* 👤 User */}
             <p><b>User:</b> {r.user_id}</p>
 
-            {/* ⭐ Rating */}
-            <p>⭐ {r.rating}</p>
+            <p>
+              <b>Source:</b>{" "}
+              {r.source === "tmdb" ? "🌍 Online" : "🧑 User"}
+            </p>
 
-            {/* 💬 Review */}
+            <p>⭐ {r.rating || "N/A"}</p>
+
             <p>{r.review_text}</p>
 
-            {/* 📊 Sentiment */}
             <p>
               📊{" "}
-              <b style={{ color: r.sentiment === "positive" ? "green" : "red" }}>
+              <b
+                style={{
+                  color:
+                    r.sentiment === "positive"
+                      ? "green"
+                      : r.sentiment === "negative"
+                      ? "red"
+                      : "gray",
+                }}
+              >
                 {r.sentiment}
               </b>
             </p>
 
-            {/* 🕒 Time */}
-            <p style={{ fontSize: "12px", color: "gray" }}>
-              {r.created_at}
-            </p>
+            <p style={styles.time}>{r.created_at}</p>
           </div>
         ))
       )}
     </div>
   );
 }
+
+/* 🎨 Styles */
+const styles = {
+  container: {
+    padding: "20px",
+    background: "#111",
+    color: "#fff",
+    minHeight: "100vh",
+  },
+  movieSection: {
+    display: "flex",
+    gap: "20px",
+    marginBottom: "20px",
+  },
+  poster: {
+    width: "200px",
+    borderRadius: "10px",
+  },
+  summary: {
+    border: "1px solid #444",
+    padding: "15px",
+    marginBottom: "20px",
+    borderRadius: "8px",
+    background: "#1c1c1c",
+  },
+  reviewCard: {
+    border: "1px solid #333",
+    margin: "10px 0",
+    padding: "10px",
+    borderRadius: "8px",
+    color: "#000",
+  },
+  time: {
+    fontSize: "12px",
+    color: "gray",
+  },
+};
 
 export default MovieDetails;

@@ -9,7 +9,7 @@ function Register() {
   });
 
   const register = async () => {
-    await API.post("/register", data);
+    await API.post("/auth/register", data);
     alert("Registered!");
   };
 

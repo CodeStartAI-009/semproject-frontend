@@ -6,7 +6,7 @@ function Login() {
   const [password, setPassword] = useState("");
 
   const login = async () => {
-    const res = await API.post("/login", { email, password });
+    const res = await API.post("/auth/login", { email, password });
     localStorage.setItem("token", res.data.token);
     alert("Logged in!");
   };
